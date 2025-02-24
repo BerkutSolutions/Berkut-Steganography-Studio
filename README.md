@@ -82,9 +82,7 @@ Berkut-Steganography-Studio/
 ├── metadata.js           # Обработка вкладки "Метаданные"
 ├── index.html            # Главный HTML-файл
 ├── styles.css            # Стили приложения
-├── github/ico.ico        # Иконка приложения
-├── package.json          # Зависимости и настройки проекта
-└── README.md             # Этот файл
+└── package.json          # Зависимости и настройки проекта
 ```
 
 ---
