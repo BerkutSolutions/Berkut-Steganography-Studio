@@ -78,6 +78,7 @@ Berkut-Steganography-Studio/
 ├── preload.js            # Предзагрузочный скрипт
 ├── renderer.js           # Логика интерфейса
 ├── hideRenderer.js       # Обработка вкладки "Скрыть данные"
+├── encryptionEngine.js   # Логика шифрования
 ├── extractRenderer.js    # Обработка вкладки "Извлечь данные"
 ├── metadata.js           # Обработка вкладки "Метаданные"
 ├── index.html            # Главный HTML-файл
