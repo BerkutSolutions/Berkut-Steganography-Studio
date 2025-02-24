@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Berkut Steganography Studio</title>
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self'; 
+    script-src 'self'; 
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+    font-src 'self' https://fonts.gstatic.com; 
+    img-src 'self' data:;
+  ">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="light-theme">
+  <div id="container">
+    <div id="sidebar">
+      <button id="hide-tab" class="sidebar-button hide-btn">
+        <span>Скрыть данные</span><i></i>
+      </button>
+      <button id="extract-tab" class="sidebar-button extract-btn">
+        <span>Извлечь данные</span><i></i>
+      </button>
+      <button id="metadata-tab" class="sidebar-button metadata-btn">
+        <span>Метаданные</span><i></i>
+      </button>
+    </div>
+    <div id="main-panel">
+      <div id="hide-panel" class="tab-panel">
+        <h1>Скрыть данные</h1>
+        <div class="section">
+          <label for="file-type">Тип носителя:</label>
+          <select id="file-type">
+            <option value="image">Фото</option>
+            <option value="audio">Аудио</option>
+            <option value="video">Видео</option>
+            <option value="docx">DOCX</option>
+            <option value="pdf">PDF</option>
+          </select>
+        </div>
+        <div class="section radio-input">
+          <label class="label">
+            <input type="radio" name="input-mode" value="message" checked>
+            <p class="text">Добавить сообщение</p>
+          </label>
+          <label class="label">
+            <input type="radio" name="input-mode" value="file">
+            <p class="text">Добавить файл</p>
+          </label>
+          <label class="label">
+            <input type="radio" name="input-mode" value="both">
+            <p class="text">Добавить сообщение и файл</p>
+          </label>
+        </div>
+        <div class="section" id="message-section">
+          <label for="secret-text">Введите секретное сообщение:</label>
+          <textarea id="secret-text" rows="8"></textarea>
+        </div>
+        <div class="section" id="secret-file-section" style="display:none;">
+          <label for="secret-file">Выберите файл для шифрования:</label>
+          <div class="file-input-container">
+            <input type="file" id="secret-file" class="file-input">
+          </div>
+        </div>
+        <div class="section">
+          <label for="carrier-file">Выберите носитель:</label>
+          <div class="file-input-container">
+            <input type="file" id="carrier-file" class="file-input">
+          </div>
+        </div>
+        <div class="section">
+          <label for="fill-percentage">Процент заполнения (1-100):</label>
+          <input type="number" id="fill-percentage" min="1" max="100" value="100">
+        </div>
+        <div class="section">
+          <label for="encryption-key">Ключ шифрования (необязательно):</label>
+          <input type="text" id="encryption-key" placeholder="Введите ключ для шифрования">
+          <button id="generate-key" class="tab-button">Генерировать ключ</button>
+        </div>
+        <div class="section">
+          <button id="hide-button" class="tab-button">Скрыть данные</button>
+        </div>
+        <div class="section">
+          <h2>Результат:</h2>
+          <button id="save-button" class="result-button" style="display: none;">Скачать</button>
+        </div>
+      </div>
+      <div id="extract-panel" class="tab-panel" style="display:none;">
+        <h1>Извлечь данные</h1>
+        <div class="section">
+          <label for="stego-file">Выберите носитель со скрытыми данными:</label>
+          <div class="file-input-container">
+            <input type="file" id="stego-file" class="file-input" accept=".png,.jpg,.jpeg,.bmp,.tiff,.mp3,.wav,.ogg,.flac,.mp4,.avi,.mkv,.mov,.docx,.pdf">
+          </div>
+        </div>
+        <div class="section">
+          <label for="decryption-key">Ключ шифрования (если применялся):</label>
+          <input type="text" id="decryption-key" placeholder="Введите ключ для расшифровки">
+        </div>
+        <div class="section">
+          <button id="extract-button" class="tab-button">Извлечь данные</button>
+        </div>
+        <div class="section">
+          <h2>Результат:</h2>
+          <textarea id="extracted-text" rows="4" readonly></textarea>
+          <button id="save-extracted-button" class="result-button" style="display:none;">Скачать извлечённый файл</button>
+        </div>
+      </div>
+      <div id="metadata-panel" class="tab-panel" style="display:none;">
+        <h1>Метаданные</h1>
+        <div class="section">
+          <label for="meta-file">Выберите файл:</label>
+          <div class="file-input-container">
+            <input type="file" id="meta-file" class="file-input" accept=".jpg,.jpeg,.png,.tiff,.heic,.mp4,.avi,.mkv">
+          </div>
+        </div>
+        <div class="section">
+          <button id="metadata-button" class="tab-button">Удалить данные</button>
+          <button id="view-metadata" class="tab-button">Просмотр метаданных</button>
+        </div>
+        <div class="section">
+          <h2>Метаданные:</h2>
+          <textarea id="metadata-output" rows="10" readonly></textarea>
+        </div>
+        <div class="section">
+          <h2>Результат:</h2>
+          <button id="save-meta-button" class="result-button" style="display:none;">Скачать</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="confirmation-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h2>Подтверждение</h2>
+      <p>Метаданные успешно удалены. Хотите сохранить очищенный файл?</p>
+      <button id="confirm-save" class="tab-button">ОК</button>
+      <button id="cancel-save" class="tab-button">Отмена</button>
+    </div>
+  </div>
+  <script src="renderer.js"></script>
+  <script src="hideRenderer.js"></script>
+  <script src="extractRenderer.js"></script>
+  <script src="metadata.js"></script>
+</body>
+</html>
