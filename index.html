@@ -16,7 +16,31 @@
 </head>
 <body class="light-theme">
   <div id="container">
+    <!-- Добавляем панель управления окном -->
+    <div class="drag-region"></div>
+    <div id="window-controls">
+      <button id="minimize-btn" class="control-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+        </svg>
+      </button>
+      <button id="maximize-btn" class="control-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+        </svg>
+      </button>
+      <button id="close-btn" class="control-btn close-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <!-- Добавляем заголовок программы -->
     <div id="sidebar">
+      <div class="sidebar-header">
+        <h2>Berkut Steganography Studio</h2>
+      </div>
       <button id="hide-tab" class="sidebar-button hide-btn">
         <span>Скрыть данные</span><i></i>
       </button>
@@ -25,6 +49,9 @@
       </button>
       <button id="metadata-tab" class="sidebar-button metadata-btn">
         <span>Метаданные</span><i></i>
+      </button>
+      <button id="settings-tab" class="sidebar-button settings-btn">
+        <span>Настройки</span><i></i>
       </button>
     </div>
     <div id="main-panel">
@@ -129,6 +156,19 @@
           <button id="save-meta-button" class="result-button" style="display:none;">Скачать</button>
         </div>
       </div>
+      <div id="settings-panel" class="tab-panel" style="display:none;">
+        <h1>Настройки</h1>
+        <div class="section settings-container">
+          <label>
+            <input type="checkbox" id="auto-update-check">
+            Проверять обновления с Github автоматически
+          </label>
+          <div class="settings-buttons">
+            <button id="save-settings" class="tab-button">Сохранить</button>
+            <button id="cancel-settings" class="tab-button">Отмена</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <div id="confirmation-modal" class="modal" style="display:none;">
@@ -139,9 +179,24 @@
       <button id="cancel-save" class="tab-button">Отмена</button>
     </div>
   </div>
+  <div id="update-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <p id="update-message">Вышла новая версия, хотите обновить?</p>
+      <button id="update-yes" class="tab-button">Да</button>
+      <button id="update-no" class="tab-button">Нет</button>
+    </div>
+  </div>
+  <div id="update-prompt-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <p>Хотите автоматически проверять обновления с Github?</p>
+      <button id="modal-yes" class="tab-button">Да</button>
+      <button id="modal-no" class="tab-button">Нет</button>
+    </div>
+  </div>
   <script src="renderer.js"></script>
   <script src="hideRenderer.js"></script>
   <script src="extractRenderer.js"></script>
   <script src="metadata.js"></script>
+  <script src="settings.js"></script>
 </body>
 </html>

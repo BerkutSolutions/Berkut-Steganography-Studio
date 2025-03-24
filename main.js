@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -11,9 +11,113 @@ const ffmpegPath = require('ffmpeg-static');
 const ffprobePath = require('ffprobe-static').path;
 const exifr = require('exifr');
 const sharp = require('sharp');
+const fetch = require('node-fetch');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
+
+let mainWindow;
+const settingsPath = path.join(__dirname, 'settings.json');
+const currentVersion = '1.0.1';
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    frame: false,
+    transparent: true,
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+
+  mainWindow.setMenu(null);
+  mainWindow.webContents.openDevTools();
+  mainWindow.setBackgroundColor('#00000000');
+
+  mainWindow.loadFile('index.html');
+
+  mainWindow.webContents.on('context-menu', (e) => {
+    e.preventDefault();
+  });
+
+  mainWindow.on('minimize', () => {
+    console.log('Window minimized');
+    mainWindow.setBackgroundColor('#00000000');
+  });
+
+  mainWindow.on('restore', () => {
+    console.log('Window restored');
+    mainWindow.setBackgroundColor('#00000000');
+    mainWindow.webContents.send('window-restored');
+  });
+
+  mainWindow.on('maximize', () => {
+    console.log('Window maximized');
+    mainWindow.setBackgroundColor('#00000000');
+    mainWindow.webContents.send('window-maximized');
+  });
+
+  mainWindow.on('unmaximize', () => {
+    console.log('Window unmaximized');
+    mainWindow.setBackgroundColor('#00000000');
+    mainWindow.webContents.send('window-unmaximized');
+  });
+
+  ipcMain.handle('minimize-window', () => {
+    mainWindow.minimize();
+  });
+
+  ipcMain.handle('maximize-window', () => {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow.maximize();
+    }
+  });
+
+  ipcMain.handle('close-window', () => {
+    mainWindow.close();
+  });
+
+  ipcMain.handle('get-settings', () => {
+    if (!fs.existsSync(settingsPath)) {
+      fs.writeFileSync(settingsPath, JSON.stringify({}));
+      mainWindow.webContents.send('show-update-prompt');
+      return { autoUpdate: false };
+    }
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    return settings;
+  });
+
+  ipcMain.handle('save-settings', (event, settings) => {
+    fs.writeFileSync(settingsPath, JSON.stringify(settings));
+  });
+
+  ipcMain.on('set-initial-update-setting', (event, value) => {
+    const settings = { autoUpdate: value };
+    fs.writeFileSync(settingsPath, JSON.stringify(settings));
+  });
+
+  ipcMain.handle('check-for-updates', async () => {
+    try {
+      const response = await fetch('https://api.github.com/repos/BerkutSolutions/Berkut-Steganography-Studio/releases/latest');
+      const data = await response.json();
+      const latestVersion = data.tag_name.replace(/^v\.?/, '');
+      return { currentVersion, latestVersion, downloadUrl: data.html_url };
+    } catch (error) {
+      console.error('Error checking updates:', error);
+      return { currentVersion, latestVersion: null };
+    }
+  });
+
+  ipcMain.on('open-external-link', (event, url) => {
+    shell.openExternal(url);
+  });
+}
 
 ipcMain.handle('createHash', (_, algorithm, data, encoding = 'hex') => {
   return crypto.createHash(algorithm).update(data).digest(encoding);
@@ -290,22 +394,62 @@ ipcMain.handle('removeVideoMetadata', (_, filePath) => {
   });
 });
 
-function createWindow() {
-  const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false
-    }
-  });
-  win.setMenu(null);
-  win.loadFile('index.html');
-}
+app.whenReady().then(() => {
+  createWindow();
 
-app.whenReady().then(createWindow);
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+
+  const settings = fs.existsSync(settingsPath) ? JSON.parse(fs.readFileSync(settingsPath, 'utf8')) : {};
+  if (settings.autoUpdate) {
+    checkForUpdates();
+  }
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+
+async function checkForUpdates() {
+  try {
+    const response = await fetch('https://api.github.com/repos/BerkutSolutions/Berkut-Steganography-Studio/releases/latest');
+    const data = await response.json();
+    const latestVersion = data.tag_name.replace(/^v\.?/, '');
+    console.log(`Current version: ${currentVersion}, Latest version: ${latestVersion}`);
+    if (latestVersion && compareVersions(latestVersion, currentVersion) > 0) {
+      console.log(`Update available: ${latestVersion}`);
+      mainWindow.webContents.send('update-available', { version: latestVersion, downloadUrl: data.html_url });
+    } else {
+      console.log('No update available.');
+    }
+  } catch (error) {
+    console.error('Error checking updates in checkForUpdates:', error);
+  }
+}
+
+function compareVersions(v1, v2) {
+  const parseVersion = (version) => {
+    const [mainPart, suffix = ''] = version.split('-');
+    const parts = mainPart.split('.').map(Number);
+    return { parts, suffix };
+  };
+
+  const version1 = parseVersion(v1);
+  const version2 = parseVersion(v2);
+
+  const maxLength = Math.max(version1.parts.length, version2.parts.length);
+  for (let i = 0; i < maxLength; i++) {
+    const part1 = version1.parts[i] || 0;
+    const part2 = version2.parts[i] || 0;
+    if (part1 > part2) return 1;
+    if (part1 < part2) return -1;
+  }
+
+  if (version1.suffix && !version2.suffix) return 1;
+  if (!version1.suffix && version2.suffix) return -1;
+  if (version1.suffix && version2.suffix) {
+    return version1.suffix.localeCompare(version2.suffix);
+  }
+  return 0;
+}
