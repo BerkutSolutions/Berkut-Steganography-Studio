@@ -17,7 +17,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 
 let mainWindow;
-const settingsPath = path.join(__dirname, 'settings.json');
+const settingsPath = path.join(app.getPath('userData'), 'settings.json');
 const currentVersion = '1.0.1';
 
 function createWindow() {
@@ -35,7 +35,6 @@ function createWindow() {
   });
 
   mainWindow.setMenu(null);
-  mainWindow.webContents.openDevTools();
   mainWindow.setBackgroundColor('#00000000');
 
   mainWindow.loadFile('index.html');
@@ -85,7 +84,7 @@ function createWindow() {
 
   ipcMain.handle('get-settings', () => {
     if (!fs.existsSync(settingsPath)) {
-      fs.writeFileSync(settingsPath, JSON.stringify({}));
+      fs.writeFileSync(settingsPath, JSON.stringify({ autoUpdate: false }, null, 2));
       mainWindow.webContents.send('show-update-prompt');
       return { autoUpdate: false };
     }
